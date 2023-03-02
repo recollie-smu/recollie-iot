@@ -1,40 +1,43 @@
-from microbit import *
-import radio
-
-radio.on()
+# this is in makeCode!!!
+message = ""
 
 def on_button_pressed_a():
-    display.show(Image(
-        "01010:"
-        "00000:"
-        "02020:"
-        "00000:"
-        "01010"))
-
-    sleep(100)
-    display.clear()
-
-button_a.was_pressed(on_button_pressed_a)
+    basic.show_leds("""
+        . # . # .
+                . . . . .
+                . . # . .
+                . . . . .
+                . # . # .
+    """)
+    basic.pause(100)
+    basic.clear_screen()
+input.on_button_pressed(Button.A, on_button_pressed_a)
 
 def on_button_pressed_b():
-    display.show(Image(
-        "00200:"
-        "02220:"
-        "20202:"
-        "21212:"
-        "20102"))
+    basic.show_leds("""
+        . . # # #
+                . . # . #
+                # . # . #
+                # . # . .
+                # # # . .
+    """)
+    serial.write_line("ggggg22222")
+    serial.write_line("mmmmm33333")
+    serial.write_line("rrrrr55555")
+    basic.clear_screen()
+input.on_button_pressed(Button.B, on_button_pressed_b)
 
-    radio.send("ggggg22222")
-    radio.send("mmmmm33333")
-    radio.send("rrrrr55555")
-
-    display.clear()
-
-button_b.was_pressed(on_button_pressed_b)
-
-while True:
-    incoming = radio.receive()
-    if incoming:
-        display.show(incoming)
-        sleep(100)
-        display.clear()
+def on_data_received():
+    global message
+    basic.show_leds("""
+        # . # . .
+                . . . . .
+                # # # . .
+                . . . . .
+                . . . . .
+    """)
+    message = serial.read_line()
+    basic.show_string(message)
+    basic.pause(100)
+    basic.clear_screen()
+serial.on_data_received(serial.delimiters(Delimiters.NEW_LINE), on_data_received)

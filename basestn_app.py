@@ -15,9 +15,14 @@ def api_calls():
     return ""
     return "ttttt99999"
 
-def microbit_data_logic():
-    # TODO: WRITE WAYS TO HANDLE DATA FROM MICROBIT LOGIC HERE
+def writing2ui(op_code):
+    # TODO: WRITE DATA TO UI
     pass
+
+def microbit_data_logic():
+    """Receive data from the microbit and process them to send to UI"""
+
+    
 
 def main():
     # Find the serial port for the micro:bit
@@ -31,23 +36,24 @@ def main():
     time.sleep(2)
     print("...connected to microbit!")
 
-    isWriting = False
+    is_writing = False
     # Read and write to microbit
     while True:
         # checks for api calls
         message = api_calls()
         if message != "":
-            isWriting = True
+            is_writing = True
 
         # Write to microbit if there is a command from API
-        if isWriting:
+        if is_writing:
             ser.write(message.encode())
-            isWriting = False
+            is_writing = False
         
         # Check if there is any data waiting in the serial buffer
         if ser.inWaiting() > 0:
             data = ser.readline().decode().rstrip()
-            microbit_data_logic()
+            op_code = microbit_data_logic()
+
             print(data) # TO BE REMOVED
 
 if __name__ == "__main__":
