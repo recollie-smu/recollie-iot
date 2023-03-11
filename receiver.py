@@ -6,7 +6,7 @@ def on_button_pressed_a():
                 . . # . .
                 . # . # .
     """)
-    radio.send_string("" + ("RRR:111\n"))
+    radio.send_string("" + ("rrr:111\n"))
     basic.pause(2000)
     basic.clear_screen()
 input.on_button_pressed(Button.A, on_button_pressed_a)
@@ -33,7 +33,7 @@ def on_button_pressed_b():
                 . . # . .
                 . # . # .
     """)
-    radio.send_string("" + ("RRRR1111\n"))
+    radio.send_string("" + ("rrrr1111\n"))
     basic.pause(2000)
     basic.clear_screen()
 input.on_button_pressed(Button.B, on_button_pressed_b)
