@@ -1,11 +1,15 @@
 import serial.tools.list_ports
 import time
 import requests
+from multiprocessing.connection import Listener
 
 # TODO: put your own serial interface
 SERIAL_INTERFACE = "COM5"
 # TODO: Change url to API
 API_URL = "https://www.w3schools.com/python/demopage.php"
+# TODO: change websocket url
+WEBSOCKET_PORT = "6000"
+WEBSOCKET_PASSWORD = b"Tyh56hg"
 OP_CODES = {'r': 'radio', 'g': 'gestures', 'm': 'motion'}
 
 def connect2serial(serial_port: str):
@@ -17,9 +21,13 @@ def connect2serial(serial_port: str):
         print("Connection failure! Closing ...")
         exit()
 
-def api_calls():
+def api_calls(connection):
     """Checks for any API calls and returns them in a alphabet and number pair else returns an empty string"""
     # TODO: WRITE API CALLS HERE REMEMBER TO END WITH \n !!!!!!!!!
+
+    if connection.poll():
+        msg = connection.recv()
+        return msg
     return ""
     # return "1234567\n"
 
@@ -81,8 +89,19 @@ def main():
     # for port in ports:
     #     print(port.description)
 
-    ser = connect2serial("COM5")
+    address = ('localhost', WEBSOCKET_PORT)     # family is deduced to be 'AF_INET'
+    listener = Listener(address, authkey=WEBSOCKET_PASSWORD)
+    
+    print("Connecting to client.py..., please start client.py if you haven't.")
+    try: 
+        connection = listener.accept()
+    except:
+        print('Wrong password! Exiting...')
+        exit()
 
+    print('Connection accepted from', listener.last_accepted)
+
+    ser = connect2serial("COM5")
     # Wait for the micro:bit to initialize
     time.sleep(2)
     print("...connected to microbit!")
@@ -91,8 +110,11 @@ def main():
     # Read and write to microbit
     while True:
         # checks for api calls
-        message = api_calls()
-        if message != "":
+        message = api_calls(connection)
+        if message == 'close':
+            connection.close()
+            break
+        elif message != "":
             is_writing = True
 
         # Write to microbit if there is a command from API
@@ -107,6 +129,8 @@ def main():
             response = postRequest2Api(op_code)
             print(response) # e.g. <Response [200]>
             print(data) # TO BE REMOVED
+
+    listener.close()
 
 if __name__ == "__main__":
     main()
