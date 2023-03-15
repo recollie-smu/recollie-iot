@@ -7,10 +7,15 @@ from multiprocessing.connection import Listener
 SERIAL_INTERFACE = "COM5"
 # TODO: Change url to API
 API_URL = "https://www.w3schools.com/python/demopage.php"
-# TODO: change websocket url
-WEBSOCKET_PORT = "6000"
-WEBSOCKET_PASSWORD = b"Tyh56hg"
+
 OP_CODES = {'r': 'radio', 'g': 'gestures', 'm': 'motion'}
+GESTURES_ACTIONS = {1: 'feed pet', 2:'petting'} 
+MOTION_ACTION = 'motion detected'
+RADIO_ACTIONS = {
+    0: 'base station', 1: 'bathroom', 
+    2: 'bedroom', 3: 'kitchen', 4: 'living room'
+}
+
 
 def connect2serial(serial_port: str):
     """Trys to connect to serial port"""
@@ -21,13 +26,11 @@ def connect2serial(serial_port: str):
         print("Connection failure! Closing ...")
         exit()
 
-def api_calls(connection):
+def api_calls():
     """Checks for any API calls and returns them in a alphabet and number pair else returns an empty string"""
     # TODO: WRITE API CALLS HERE REMEMBER TO END WITH \n !!!!!!!!!
 
-    if connection.poll():
-        msg = connection.recv()
-        return msg
+    
     return ""
     # return "1234567\n"
 
@@ -89,18 +92,6 @@ def main():
     # for port in ports:
     #     print(port.description)
 
-    address = ('localhost', WEBSOCKET_PORT)     # family is deduced to be 'AF_INET'
-    listener = Listener(address, authkey=WEBSOCKET_PASSWORD)
-    
-    print("Connecting to client.py..., please start client.py if you haven't.")
-    try: 
-        connection = listener.accept()
-    except:
-        print('Wrong password! Exiting...')
-        exit()
-
-    print('Connection accepted from', listener.last_accepted)
-
     ser = connect2serial("COM5")
     # Wait for the micro:bit to initialize
     time.sleep(2)
@@ -110,9 +101,8 @@ def main():
     # Read and write to microbit
     while True:
         # checks for api calls
-        message = api_calls(connection)
+        message = api_calls()
         if message == 'close':
-            connection.close()
             break
         elif message != "":
             is_writing = True
@@ -130,7 +120,6 @@ def main():
             print(response) # e.g. <Response [200]>
             print(data) # TO BE REMOVED
 
-    listener.close()
 
 if __name__ == "__main__":
     main()
