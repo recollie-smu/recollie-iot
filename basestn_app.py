@@ -1,23 +1,12 @@
 import serial.tools.list_ports
-import time
-import requests
-from multiprocessing.connection import Listener
+from time import localtime, strftime, sleep
+import socketio
 
 # TODO: put your own serial interface
 SERIAL_INTERFACE = "COM5"
-# TODO: Change url to API
-API_URL = "https://www.w3schools.com/python/demopage.php"
+SERIAL_LOOPER_NAMESPACE = '/serial-looper'
 
-OP_CODES = {'r': 'radio', 'g': 'gestures', 'm': 'motion'}
-GESTURES_ACTIONS = {1: 'feed pet', 2:'petting'} 
-MOTION_ACTION = 'motion detected'
-RADIO_ACTIONS = {
-    0: 'base station', 1: 'bathroom', 
-    2: 'bedroom', 3: 'kitchen', 4: 'living room'
-}
-
-
-def connect2serial(serial_port: str):
+def connect_to_serial(serial_port: str):
     """Trys to connect to serial port"""
     try:
         print("Trying to connect to serial port: " + serial_port)
@@ -26,15 +15,7 @@ def connect2serial(serial_port: str):
         print("Connection failure! Closing ...")
         exit()
 
-def api_calls():
-    """Checks for any API calls and returns them in a alphabet and number pair else returns an empty string"""
-    # TODO: WRITE API CALLS HERE REMEMBER TO END WITH \n !!!!!!!!!
-
-    
-    return ""
-    # return "1234567\n"
-
-def microbit_data_logic(data: str):
+def process_microbit_raw_data(data: str):
     """Receive data from the microbit and process them to send to UI"""
     processed = ""
 
@@ -43,21 +24,16 @@ def microbit_data_logic(data: str):
         if characters in processed:
             continue
         processed += characters
-    
-    if isDataCorrupted(processed):
+
+    if is_data_corrupted(processed):
         print("Data received from serial is corrupted")
         return ""
     
     return processed
 
-def isDataCorrupted(data: str):
-    """Checks whether the data from microbit via serial is corrupted 
-    i.e. not in the form of xy, where x is a letter in [r,g,m] only 
-    and y is a number from 0 to 4 only"""
+def is_data_corrupted(data: str):
+    """Checks whether the data from microbit via serial is corrupted"""
     if len(data) != 2:
-        return True
-    
-    if data[0] not in OP_CODES:
         return True
     
     if not data[1].isnumeric():
@@ -65,61 +41,93 @@ def isDataCorrupted(data: str):
     
     return False
 
-def postRequest2Api(data: str):
+def send_to_socket_server(sio, data: str):
     """
     Receive data in the form of xy, where x is a letter in [r,g,m] only 
     and y is a number from 0 to 4 only
     """
     # TODO: WRITE INSTRUCTIONS TO UI
 
-    op_code = OP_CODES[data[0]]
+    op_code = data[0]
     index = data[1]
+    timestamp = strftime("%Y-%m-%d %H:%M:%S", localtime())
 
-    sendingObj = {
-        'operation': op_code, 
-        'index': index
-        }
-    
-    response = requests.post(API_URL, json = sendingObj)
+    if op_code == 's':
+        sendingObj = {
+            'inputType': index, 
+            'timestamp': timestamp
+            }
+        
+        # Emit a Socket.io event with the serial data
+        sio.emit('sensor', sendingObj, namespace=SERIAL_LOOPER_NAMESPACE)
+        print(f'Sending to server : {sendingObj}')
 
-    return response
+    elif op_code == 't':
+         # TODO: change when josh decides
+        sendingObj = {
+            'taskId': index,
+            'status': index,
+            'location': index
+            }
+        
+        # Emit a Socket.io event with the serial data
+        sio.emit('task', sendingObj, namespace=SERIAL_LOOPER_NAMESPACE)
+        print(f'Sending to server : {sendingObj}')
+
+    else:
+        print('Unrecognised op code')
+
+def process_ui_raw_data(data):
+    """Receive data from the UI and process them to send to microbit"""
+    try:
+        taskId = data['taskId']
+        status = data['status']
+        location = data['location']
+    except KeyError:
+        print('Format from UI is not accepted')
+        return ''
+
+    return f'{taskId}{status}{location}'
 
 def main():
 
     # Find the serial port for the micro:bit
     # code not working for now
-    # ports = serial.tools.list_ports.comports()
-    # for port in ports:
-    #     print(port.description)
+    ports = serial.tools.list_ports.comports()
+    for port in ports:
+        print(port.description)
 
-    ser = connect2serial("COM5")
+    ser = connect_to_serial("COM5")
     # Wait for the micro:bit to initialize
-    time.sleep(2)
+    sleep(2)
     print("...connected to microbit!")
+    
+    sio = socketio.Client()
 
-    is_writing = False
+    @sio.on('connect', namespace=SERIAL_LOOPER_NAMESPACE)
+    def on_connect():
+        print(f"Connected to server as namespace='{SERIAL_LOOPER_NAMESPACE}'")
+
+    # Receiving task
+    @sio.on('task', namespace=SERIAL_LOOPER_NAMESPACE)
+    def on_task(data):
+        print(f'Received from server : {data}')
+        processed = process_ui_raw_data(data)
+        if not processed == '':
+            ser.write(processed.encode())
+
+    # Connect to the server
+    sio.connect('http://localhost:8080',namespaces=[SERIAL_LOOPER_NAMESPACE])
+    
     # Read and write to microbit
-    while True:
-        # checks for api calls
-        message = api_calls()
-        if message == 'close':
-            break
-        elif message != "":
-            is_writing = True
-
-        # Write to microbit if there is a command from API
-        if is_writing:
-            ser.write(message.encode())
-            is_writing = False
-        
+    while True:        
         # Check if there is any data waiting in the serial buffer
         if ser.inWaiting() > 0:
             data = ser.readline().decode().rstrip()
-            op_code = microbit_data_logic(data)
-            response = postRequest2Api(op_code)
-            print(response) # e.g. <Response [200]>
-            print(data) # TO BE REMOVED
-
+            op_code = process_microbit_raw_data(data)
+            if op_code == '':
+                continue
+            send_to_socket_server(sio, op_code)
 
 if __name__ == "__main__":
     main()
