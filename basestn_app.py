@@ -5,6 +5,8 @@ import socketio
 # TODO: put your own serial interface
 SERIAL_INTERFACE = "COM5"
 SERIAL_LOOPER_NAMESPACE = '/serial-looper'
+LOCATION_DIR  = {1: 'r1', 2: 'r2', 3: 'r3', 4:'r4'}
+TASKID_COLLECTION = {}
 
 def connect_to_serial(serial_port: str):
     """Trys to connect to serial port"""
@@ -43,7 +45,7 @@ def is_data_corrupted(data: str):
 
 def send_to_socket_server(sio, data: str):
     """
-    Receive data in the form of xy, where x is a letter in [r,g,m] only 
+    Receive data in the form of xy, where x is a letter in [g,r] only 
     and y is a number from 0 to 4 only
     """
     # TODO: WRITE INSTRUCTIONS TO UI
@@ -52,7 +54,7 @@ def send_to_socket_server(sio, data: str):
     index = data[1]
     timestamp = strftime("%Y-%m-%d %H:%M:%S", localtime())
 
-    if op_code == 's':
+    if op_code == 'g':
         sendingObj = {
             'inputType': index, 
             'timestamp': timestamp
@@ -62,11 +64,11 @@ def send_to_socket_server(sio, data: str):
         sio.emit('sensor', sendingObj, namespace=SERIAL_LOOPER_NAMESPACE)
         print(f'Sending to server : {sendingObj}')
 
-    elif op_code == 't':
+    elif op_code == 'r':
          # TODO: change when josh decides
         sendingObj = {
-            'taskId': index,
-            'status': index,
+            'taskId': TASKID_COLLECTION[index].pop(0),
+            'status': 3,
             'location': index
             }
         
@@ -80,14 +82,20 @@ def send_to_socket_server(sio, data: str):
 def process_ui_raw_data(data):
     """Receive data from the UI and process them to send to microbit"""
     try:
-        taskId = data['taskId']
+        task_id = data['taskId']
         status = data['status']
-        location = data['location']
+        location = LOCATION_DIR[data['location']]
     except KeyError:
         print('Format from UI is not accepted')
         return ''
+    
+    # TODO: check way of buffer
+    if TASKID_COLLECTION.get(data['location']) is None:
+        TASKID_COLLECTION[data['location']] = [task_id]
+    else:
+        TASKID_COLLECTION[data['location']].append(task_id)
 
-    return f'{taskId}{status}{location}'
+    return f'{location}:{status}\n'
 
 def main():
 
