@@ -66,11 +66,14 @@ def send_to_socket_server(sio, data: str):
 
     elif op_code == 'r':
          # TODO: change when josh decides
-        sendingObj = {
-            'taskId': TASKID_COLLECTION[index].pop(0),
-            'status': 3,
-            'location': index
-            }
+        try:
+            sendingObj = {
+                'taskId': TASKID_COLLECTION[index].pop(0),
+                'status': 3,
+                'location': index
+                }
+        except KeyError:
+            print('Task id not in buffer')
         
         # Emit a Socket.io event with the serial data
         sio.emit('task', sendingObj, namespace=SERIAL_LOOPER_NAMESPACE)
