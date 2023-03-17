@@ -66,6 +66,7 @@ def send_to_socket_server(sio, data: str):
 
     elif op_code == 'r':
          # TODO: change when josh decides
+        sendingObj = {}
         try:
             sendingObj = {
                 'taskId': TASKID_COLLECTION[index].pop(0),
@@ -84,6 +85,7 @@ def send_to_socket_server(sio, data: str):
 
 def process_ui_raw_data(data):
     """Receive data from the UI and process them to send to microbit"""
+    
     try:
         task_id = data['taskId']
         status = data['status']
