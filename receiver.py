@@ -1,4 +1,5 @@
 def on_button_pressed_a():
+    global val
     basic.show_leds("""
         . # . # .
                 . . # . .
@@ -6,18 +7,20 @@ def on_button_pressed_a():
                 . . # . .
                 . # . # .
     """)
-    radio.send_string("" + ("rrr:111\n"))
+    val = 0
+    radio.send_string("" + ("rrrr1111\n"))
     basic.pause(2000)
     basic.clear_screen()
 input.on_button_pressed(Button.A, on_button_pressed_a)
 
 def on_received_string(receivedString):
-    room = receivedString.slice(0, 1)
-    reminder = receivedString.slice(2, 3)
-    overdue = receivedString.slice(4, 5)
-    if overdue == "Y":
+    global val
+    room = receivedString.slice(0, 2)
+    reminder = receivedString.slice(3, 4)
+    if reminder == "2":
         basic.show_icon(IconNames.ANGRY)
-    if room == "1":
+        val = 1
+    if room == "r1":
         if reminder == "1":
             basic.show_icon(IconNames.HEART)
             music.play_melody("C - D E - C E - ", 120)
@@ -26,6 +29,7 @@ def on_received_string(receivedString):
 radio.on_received_string(on_received_string)
 
 def on_button_pressed_b():
+    global val
     basic.show_leds("""
         . # . # .
                 . . # . .
@@ -33,9 +37,16 @@ def on_button_pressed_b():
                 . . # . .
                 . # . # .
     """)
+    val = 0
     radio.send_string("" + ("rrrr1111\n"))
     basic.pause(2000)
     basic.clear_screen()
 input.on_button_pressed(Button.B, on_button_pressed_b)
 
+val = 0
 radio.set_group(1)
+
+def on_forever():
+    if val == 1:
+        music.start_melody(music.built_in_melody(Melodies.BADDY), MelodyOptions.FOREVER)
+basic.forever(on_forever)
