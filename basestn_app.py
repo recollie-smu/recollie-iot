@@ -6,7 +6,7 @@ import socketio
 SERIAL_INTERFACE = "COM6"
 SERIAL_LOOPER_NAMESPACE = '/serial-looper'
 STATUS_COMPLETE = 3
-BATTERY_INPUT_TYPE = 4
+BATTERY_STATUS = 4
 LOCATION_DIR  = {1: 'r1', 2: 'r2', 3: 'r3', 4:'r4'}
 TASKID_COLLECTION = {}
 
@@ -88,9 +88,10 @@ def send_to_socket_server(sio, data: str):
     # battery related
     elif op_code == 'b':
         sendingObj = {
-            'inputType': BATTERY_INPUT_TYPE, 
-            'timestamp': timestamp
-            }
+                'taskId': -1,
+                'status': BATTERY_STATUS,
+                'location': index
+                }
         
         # Emit a Socket.io event with the serial data
         sio.emit('sensor', sendingObj, namespace=SERIAL_LOOPER_NAMESPACE)
