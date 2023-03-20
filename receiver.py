@@ -51,6 +51,6 @@ def on_forever():
     voltage = pins.analog_read_pin(AnalogPin.P0)
     if val == 1:
         music.start_melody(music.built_in_melody(Melodies.BADDY), MelodyOptions.FOREVER)
-    if voltage <= 300:
+    if voltage <= 276:
         radio.send_string("" + ("bbbb1111\n"))
 basic.forever(on_forever)
