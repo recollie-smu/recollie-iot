@@ -3,8 +3,10 @@ from time import localtime, strftime, sleep
 import socketio
 
 # TODO: put your own serial interface
-SERIAL_INTERFACE = "COM5"
+SERIAL_INTERFACE = "COM6"
 SERIAL_LOOPER_NAMESPACE = '/serial-looper'
+STATUS_COMPLETE = 3
+BATTERY_INPUT_TYPE = 4
 LOCATION_DIR  = {1: 'r1', 2: 'r2', 3: 'r3', 4:'r4'}
 TASKID_COLLECTION = {}
 
@@ -45,15 +47,15 @@ def is_data_corrupted(data: str):
 
 def send_to_socket_server(sio, data: str):
     """
-    Receive data in the form of xy, where x is a letter in [g,r] only 
+    Receive data in the form of xy, where x is a letter in [g,r,b] only 
     and y is a number from 0 to 4 only
     """
-    # TODO: WRITE INSTRUCTIONS TO UI
 
     op_code = data[0]
-    index = data[1]
+    index = int(data[1])
     timestamp = strftime("%Y-%m-%d %H:%M:%S", localtime())
 
+    # gestures related
     if op_code == 'g':
         sendingObj = {
             'inputType': index, 
@@ -64,20 +66,34 @@ def send_to_socket_server(sio, data: str):
         sio.emit('sensor', sendingObj, namespace=SERIAL_LOOPER_NAMESPACE)
         print(f'Sending to server : {sendingObj}')
 
+    # tasks related
     elif op_code == 'r':
-         # TODO: change when josh decides
         sendingObj = {}
         try:
             sendingObj = {
                 'taskId': TASKID_COLLECTION[index].pop(0),
-                'status': 3,
+                'status': STATUS_COMPLETE,
                 'location': index
                 }
+            
+            # Emit a Socket.io event with the serial data
+            sio.emit('task', sendingObj, namespace=SERIAL_LOOPER_NAMESPACE)
+            print(f'Sending to server : {sendingObj}')
         except KeyError:
-            print('Task id not in buffer')
+            print(f'Task id {index} not in buffer')
+        
+        except IndexError:
+            print(f'Unable to map {index}, buffer is empty.')
+    
+    # battery related
+    elif op_code == 'b':
+        sendingObj = {
+            'inputType': BATTERY_INPUT_TYPE, 
+            'timestamp': timestamp
+            }
         
         # Emit a Socket.io event with the serial data
-        sio.emit('task', sendingObj, namespace=SERIAL_LOOPER_NAMESPACE)
+        sio.emit('sensor', sendingObj, namespace=SERIAL_LOOPER_NAMESPACE)
         print(f'Sending to server : {sendingObj}')
 
     else:
@@ -94,7 +110,7 @@ def process_ui_raw_data(data):
         print('Format from UI is not accepted')
         return ''
     
-    # TODO: check way of buffer
+    # adds to buffer
     if TASKID_COLLECTION.get(data['location']) is None:
         TASKID_COLLECTION[data['location']] = [task_id]
     else:
@@ -110,7 +126,7 @@ def main():
     for port in ports:
         print(port.description)
 
-    ser = connect_to_serial("COM5")
+    ser = connect_to_serial(SERIAL_INTERFACE)
     # Wait for the micro:bit to initialize
     sleep(2)
     print("...connected to microbit!")
