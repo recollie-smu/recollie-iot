@@ -44,9 +44,13 @@ def on_button_pressed_b():
 input.on_button_pressed(Button.B, on_button_pressed_b)
 
 val = 0
+voltage = 0
 radio.set_group(1)
 
 def on_forever():
+    voltage = pins.analog_read_pin(AnalogPin.P0)
     if val == 1:
         music.start_melody(music.built_in_melody(Melodies.BADDY), MelodyOptions.FOREVER)
+    if voltage <= 300:
+        radio.send_string("" + ("bbbb1111\n"))
 basic.forever(on_forever)
