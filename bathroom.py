@@ -8,7 +8,7 @@ def on_button_pressed_a():
                 . # . # .
     """)
     val = 0
-    radio.send_string("" + ("rrrr2222\n"))
+    radio.send_string("" + ("rrrr1111\n"))
     basic.pause(2000)
     basic.clear_screen()
 input.on_button_pressed(Button.A, on_button_pressed_a)
@@ -20,7 +20,7 @@ def on_received_string(receivedString):
     if reminder == "2":
         basic.show_icon(IconNames.ANGRY)
         val = 1
-    if room == "r2":
+    if room == "r1":
         if reminder == "1":
             basic.show_icon(IconNames.HEART)
             music.play_melody("C - D E - C E - ", 120)
@@ -38,7 +38,7 @@ def on_button_pressed_b():
                 . # . # .
     """)
     val = 0
-    radio.send_string("" + ("rrrr2222\n"))
+    radio.send_string("" + ("rrrr1111\n"))
     basic.pause(2000)
     basic.clear_screen()
 input.on_button_pressed(Button.B, on_button_pressed_b)
@@ -52,5 +52,5 @@ def on_forever():
     if val == 1:
         music.start_melody(music.built_in_melody(Melodies.BADDY), MelodyOptions.ONCE)
     if voltage <= 256 and val == 0:
-        radio.send_string("" + ("bbbb2222\n"))
+        radio.send_string("" + ("bbbb1111\n"))
 basic.forever(on_forever)
