@@ -17,15 +17,15 @@ def on_received_string(receivedString):
     global val
     room = receivedString.slice(0, 2)
     reminder = receivedString.slice(3, 4)
-    if reminder == "2":
-        basic.show_icon(IconNames.ANGRY)
-        val = 1
     if room == "r2":
         if reminder == "1":
             basic.show_icon(IconNames.HEART)
             music.play_melody("C - D E - C E - ", 120)
             music.play_melody("C E - D - E F F ", 120)
             music.play_melody("E D F - - - - - ", 120)
+        elif reminder == "2":
+            basic.show_icon(IconNames.ANGRY)
+            val = 1
 radio.on_received_string(on_received_string)
 
 def on_button_pressed_b():

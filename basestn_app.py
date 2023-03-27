@@ -119,15 +119,39 @@ def process_ui_raw_data(data):
 
     return f'{location}:{status}\n'
 
-def main():
+def find_connected_port():
+    s = serial.Serial()
+    port_connected = ""
+    portNames = [
+        "/dev/ttyUSB0",
+        "/dev/ttyUSB1",
+        "/dev/ttyUSB2",
+        "/dev/ttyUSB3",
+        "/dev/ttyACM0",
+        "/dev/ttyACM1",
+        "/dev/ttyACM2",
+        "/dev/ttyACM3"
+    ]
+    for pname in portNames:
+        try:
+            s.port = pname
+            s.open()
+            if s.isOpen():
+                port_connected = pname
+                print("Found {}.".format(pname))
+        except:
+            pass
+    return port_connected
 
+def main():
+    port_to_connect = find_connected_port()
     # Find the serial port for the micro:bit
     # code not working for now
     ports = serial.tools.list_ports.comports()
     for port in ports:
         print(port.description)
 
-    ser = connect_to_serial(SERIAL_INTERFACE)
+    ser = connect_to_serial(port_to_connect)
     # Wait for the micro:bit to initialize
     sleep(2)
     print("...connected to microbit!")
