@@ -13,7 +13,7 @@
 2. Transfer the dist folder into the Raspberry Pi
 3. To run the website type ```serve -s dist``` into the terminal, one folder level before where the dist folder is located
 ## Backend
-1. Transfer the whole [repo](https://github.com/recollie-smu/recollie-backend) into the Raspberry Pi.
+1. Transfer the code from this [repo](https://github.com/recollie-smu/recollie-backend) into the Raspberry Pi.
      - Follow the README.md to setup the backend
 ## IoT Side
 1. Transfer basestn_app.py into the Raspberry Pi
