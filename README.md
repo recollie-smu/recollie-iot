@@ -18,6 +18,7 @@
 ## IoT Side
 1. Transfer basestn_app.py into the Raspberry Pi
 2. Type and enter ```pip3 install python-socketio``` in the terminal to install this package
-3. To run basestn_app.py type ```python3 basestn_app.py``` into the terminal 
+3. To run basestn_app.py type ```python3 basestn_app.py``` into the terminal, but make sure the backend
+   code is running first.
 
 
